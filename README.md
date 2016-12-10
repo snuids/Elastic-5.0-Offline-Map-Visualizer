@@ -1,6 +1,6 @@
 # jVectorMapKibana
 
-An Offline map visualizer for Kibana 4.4.
+An Offline map visualizer for Kibana 5.0 to 5.1.1.
 
 Copyright 2016 Arnaud Marchand
 
