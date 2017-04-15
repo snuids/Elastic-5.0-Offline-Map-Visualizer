@@ -1,8 +1,10 @@
 # jVectorMapKibana
 
+
 An Offline map visualizer for Kibana 5.0 to 5.2.
 
-Copyright 2016 Arnaud Marchand
+
+Kibana 4 version here: https://github.com/snuids/jVectorMapKibana
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
@@ -14,3 +16,5 @@ Simply unzip the content in the plugin folder of Kibana.
 Maps provided by: http://jvectormap.com/ are not free of charge for commercial products.
 
 Screenshots here: https://github.com/snuids/jVectorMapKibana/wiki
+
+Copyright 2016 Arnaud Marchand
