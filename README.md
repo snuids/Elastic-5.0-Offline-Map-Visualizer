@@ -1,6 +1,8 @@
 # jVectorMapKibana
 
-An Offline map visualizer for Kibana 5.0.
+
+An Offline map visualizer for Kibana 5.0 to 5.2.
+
 
 Kibana 4 version here: https://github.com/snuids/jVectorMapKibana
 

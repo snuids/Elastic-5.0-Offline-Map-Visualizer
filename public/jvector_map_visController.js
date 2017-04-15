@@ -6,14 +6,14 @@ module.controller('JVectorMapController', function($scope, Private) {
 
 	var filterManager = Private(require('ui/filter_manager'));
 
-	$scope.refine_interval=function (interval, cd, mask) 
+	$scope.refine_interval=function (interval, cd, mask)
 	{
 		if (cd&mask)
 			interval[0] = (interval[0] + interval[1])/2;
 	  	else
 			interval[1] = (interval[0] + interval[1])/2;
 	}
-	
+
 	$scope.hexToRGB = function(hex){
 		 	hex=hex.replace(/#/g,'');
 		    var r = parseInt('0x'+hex[0]+hex[1]);
@@ -21,34 +21,34 @@ module.controller('JVectorMapController', function($scope, Private) {
 		    var b = parseInt('0x'+hex[4]+hex[5]);
 	    	return [r,g,b];
 	}
-	
+
 	$scope.decodeGeoHash=function(geohash) {
 		var BITS = [16, 8, 4, 2, 1];
 		var BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";
-	
+
 		var is_even = 1;
-		var lat = []; 
-		
-		lat[0] = -90.0;  
+		var lat = [];
+
+		lat[0] = -90.0;
 		lat[1] = 90.0;
 
 		var lon = [];
-		lon[0] = -180.0; 
+		lon[0] = -180.0;
 		lon[1] = 180.0;
 
-		var lat_err = 90.0;  
+		var lat_err = 90.0;
 		var lon_err = 180.0;
-	
+
 		for (var i=0; i<geohash.length; i++) {
 			var c = geohash[i];
 			var cd = BASE32.indexOf(c);
 			for (var j=0; j<5; j++) {
 				var mask = BITS[j];
-				if (is_even) 
+				if (is_even)
 				{
 					lon_err /= 2;
 					$scope.refine_interval(lon, cd, mask);
-				} else 
+				} else
 				{
 					lat_err /= 2;
 					$scope.refine_interval(lat, cd, mask);
@@ -91,7 +91,10 @@ module.controller('JVectorMapController', function($scope, Private) {
 		// Retrieve the id of the configured tags aggregation
 		var locationsAggId = $scope.vis.aggs.bySchemaName['locations'][0].id;
 		// Retrieve the metrics aggregation configured
-		var metricsAgg = $scope.vis.aggs.bySchemaName['locationsize'][0];
+
+		var metricsAgg = null;
+		if($scope.vis.aggs.bySchemaName['locationsize']!=null)
+			metricsAgg=$scope.vis.aggs.bySchemaName['locationsize'][0];
 		var buckets = resp.aggregations[locationsAggId].buckets;
 
 
@@ -104,67 +107,73 @@ module.controller('JVectorMapController', function($scope, Private) {
 		// Transform all buckets into tag objects
 		$scope.locations = buckets.map(function(bucket) {
 			// Use the getValue function of the aggregation to get the value of a bucket
-			var value = metricsAgg.getValue(bucket);
-			// Finding the minimum and maximum value of all buckets
-			min = Math.min(min, value);
-			max = Math.max(max, value);
-			
-			return {
-				label: bucket.key,
-				geo:$scope.decodeGeoHash(bucket.key),
-				value: value
-			};
+			if(metricsAgg!=null)
+			{
+				var value = metricsAgg.getValue(bucket);
+				// Finding the minimum and maximum value of all buckets
+				min = Math.min(min, value);
+				max = Math.max(max, value);
+
+				return {
+					label: bucket.key,
+					geo:$scope.decodeGeoHash(bucket.key),
+					value: value
+				};
+			}
 		});
 
-		var circlecolormin=$scope.hexToRGB($scope.vis.params.circleColorMin)		
-		var circlecolormax=$scope.hexToRGB($scope.vis.params.circleColorMax)		
+		var circlecolormin=$scope.hexToRGB($scope.vis.params.circleColorMin)
+		var circlecolormax=$scope.hexToRGB($scope.vis.params.circleColorMax)
 		var circlecolor=circlecolormin;
 
 
 		// Calculate the font size for each tag
 		$scope.locations = $scope.locations.map(function(location) {
-			if(max!=min)
+			if(location!=null)
 			{
-				var tmpval=(location.value - min) / (max - min);
-				location.radius = parseInt(tmpval * ($scope.vis.params.maxRadius - $scope.vis.params.minRadius))
-				+parseInt($scope.vis.params.minRadius);
-				
-//				console.log("radius="+location.radius);
-//				console.log("tmpval="+tmpval);
-				
-				circlecolor=[];
-				for(var x=0;x<circlecolormin.length;x++)
+				if((max!=min)&&(location.value!=null))
 				{
-					/*console.log("min="+circlecolormin[x]+ "max="+circlecolormax[x]+" first="+((location.value - min) / (max - min))
-					+" next="+((location.value - min) / (max - min))*(circlecolormax[x]-circlecolormin[x])+" final="+circlecolormin[x]);*/
-					circlecolor.push(Math.floor(tmpval*(circlecolormax[x]-circlecolormin[x])+circlecolormin[x]));				
+					var tmpval=(location.value - min) / (max - min);
+					location.radius = parseInt(tmpval * ($scope.vis.params.maxRadius - $scope.vis.params.minRadius))
+					+parseInt($scope.vis.params.minRadius);
+
+	//				console.log("radius="+location.radius);
+	//				console.log("tmpval="+tmpval);
+
+					circlecolor=[];
+					for(var x=0;x<circlecolormin.length;x++)
+					{
+						/*console.log("min="+circlecolormin[x]+ "max="+circlecolormax[x]+" first="+((location.value - min) / (max - min))
+						+" next="+((location.value - min) / (max - min))*(circlecolormax[x]-circlecolormin[x])+" final="+circlecolormin[x]);*/
+						circlecolor.push(Math.floor(tmpval*(circlecolormax[x]-circlecolormin[x])+circlecolormin[x]));
+					}
+					location.color=circlecolor;
+	//				console.log(circlecolor);
 				}
-				location.color=circlecolor;
-				console.log(circlecolor);
+				else
+					location.radius=$scope.vis.params.minRadius;
 			}
-			else			
-				location.radius=$scope.vis.params.minRadius;
-			
 
 			return location;
 		});
-				
+
 		// Draw Map
-			
+
 		var dynmarkers=[];
-	
+
 		angular.forEach($scope.locations, function(value, key){
-			 dynmarkers.push({latLng: [value.geo.latitude[2], value.geo.longitude[2]]
+			if((value!=null)&&(value.geo!=null))
+			 	dynmarkers.push({latLng: [value.geo.latitude[2], value.geo.longitude[2]]
 				 , name: 'lat:'+value.geo.latitude[2]+' lon:'+value.geo.longitude[2]+' ('+value.value+')'
 				 ,style: {fill: 'rgba('+value.color[0]+','+value.color[1]+','+value.color[2]+','+($scope.vis.params.circleOpacity/100)+')', r:value.radius}})
 		});
 
-		
+
 		try { $('#map').vectorMap('get', 'mapObject').remove(); }
 		catch(err) {}
-		
 
-		
+
+
         $('#map').vectorMap(
   			  {
   				  map: $scope.vis.params.selectedMap+'_mill',
@@ -177,8 +186,8 @@ module.controller('JVectorMapController', function($scope, Private) {
   				  backgroundColor: $scope.vis.params.mapBackgroundColor,
   				  markers: dynmarkers
   			}
-  	  	);     		
+  	  	);
 		// End of draw map
-		
+
 	});
 });
